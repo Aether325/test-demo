@@ -15,6 +15,7 @@ echo "End compile $version"
 cp ../public/tonconnect-manifest.json ../docs
 
 # 缓存编译结果
+git add .
 git stash -u
 
 # 切换到目标分支
