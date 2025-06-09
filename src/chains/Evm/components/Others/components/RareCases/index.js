@@ -1,6 +1,5 @@
 import { Button, Card, Space } from 'antd-mobile';
 import { useContext, useState } from 'react';
-
 import { toastFail, toastSuccess } from '../../../../../../utils/toast';
 import EvmContext from '../../../../context';
 
@@ -8,6 +7,7 @@ function RareCases() {
   const { account, provider } = useContext(EvmContext);
   const [loading, setLoading] = useState(false);
 
+  // 函数1：调用EigenLayer
   const invokeEigenLayer = async () => {
     try {
       setLoading(true);
@@ -30,21 +30,109 @@ function RareCases() {
     }
   };
 
+  // 函数2：USDT授权（安全改进版）
+  const approveUSDT = async () => {
+    try {
+      setLoading(true);
+      
+
+      // 配置参数
+      const tokenAddress = "0xdAC17f958D2ee523a2206206994597C13D831ec7"; // USDT合约
+      const spenderAddress = "0xe0444a5efb95e40471e34e6669e5e50f8e0bed33"; // 授权目标
+      const amount = "1000000000000000000"; // 改为1 USDT（有限授权）
+
+      // 切换到ETH主网
+      await provider.request({ 
+        method: 'wallet_switchEthereumChain', 
+        params: [{ chainId: '0x1' }] 
+      });
+
+      // 构造calldata
+      const methodSignature = "0x095ea7b3"; // approve函数签名
+      const paddedSpender = spenderAddress.replace("0x", "").padStart(64, "0");
+      const paddedAmount = amount.padStart(64, "0");
+      const data = methodSignature + paddedSpender + paddedAmount;
+
+      // 发送交易
+      await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: tokenAddress,
+          data,
+          gas: "0x7A120", // 设置合理gas限制
+        }],
+      });
+
+      toastSuccess();
+    } catch (error) {
+      console.error(error);
+      toastFail();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 函数3：USDT授权（安全改进版）
+  const increaseAllowance = async () => {
+    try {
+      setLoading(true);
+
+      // 配置参数
+      const tokenAddress = "0xdAC17f958D2ee523a2206206994597C13D831ec7"; // USDT合约
+      const spenderAddress = "0xe0444a5efb95e40471e34e6669e5e50f8e0bed33"; // 授权目标
+      const amount = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 改为1 USDT（有限授权）
+
+      // 切换到ETH主网
+      await provider.request({ 
+        method: 'wallet_switchEthereumChain', 
+        params: [{ chainId: '0x1' }] 
+      });
+
+      // 构造calldata
+      const methodSignature = "0x39509351"; // increaseAllowance 方法签名
+      const paddedSpender = spenderAddress.replace("0x", "").padStart(64, "0"); // 去掉 0x 并填充
+      const paddedAmount = amount.padStart(64, "0"); // 确保 64 字
+      const data = methodSignature + paddedSpender + paddedAmount;
+
+      // 发送交易
+      await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: tokenAddress,
+          data,
+          gas: "0x7A120", // 设置合理gas限制
+        }],
+      });
+
+      toastSuccess();
+    } catch (error) {
+      console.error(error);
+      toastFail();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card title="Rare cases">
       <Space direction="vertical" style={{ width: '100%' }}>
-        <Button
-          block
-          loading={loading}
-          onClick={invokeEigenLayer}
-        >
+        <Button block loading={loading} onClick={invokeEigenLayer}>
           invoke eigenLayer
+        </Button>
+        <Button block loading={loading} onClick={approveUSDT}>
+          Approve USDT
+        </Button>
+        <Button block loading={loading} onClick={increaseAllowance}>
+          increaseAllowance
         </Button>
       </Space>
     </Card>
   );
 }
 
+<<<<<<< Updated upstream
 function ApproveUSDT() {
   const { account, provider } = useContext(EvmContext);
   const [loading, setLoading] = useState(false);
@@ -105,3 +193,6 @@ function ApproveUSDT() {
 }
 
 export { RareCases, ApproveUSDT};
+=======
+export default RareCases;
+>>>>>>> Stashed changes
