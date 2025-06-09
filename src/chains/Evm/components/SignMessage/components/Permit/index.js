@@ -346,14 +346,14 @@ function Permit({ chainId }) {
       setSecondSignature('');
 
       // 获取 USDC 合约实例
-      const usdcAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
+      const usdcAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
       const usdcAbi = [
-        "function nonces(address owner) view returns (uint256)"
+        'function nonces(address owner) view returns (uint256)',
       ];
       const usdcContract = new ethers.Contract(
         usdcAddress,
         usdcAbi,
-        new ethers.providers.Web3Provider(provider, 'any').getSigner()
+        new ethers.providers.Web3Provider(provider, 'any').getSigner(),
       );
 
       // 获取当前 nonce
@@ -415,7 +415,7 @@ function Permit({ chainId }) {
           spender,
           value: '1000000',
           nonce: currentNonce.toString(),
-          deadline: `1800000000`,
+          deadline: '1800000000',
         },
       };
       console.log('First Message Params:', JSON.stringify(firstMsgParams, null, 2));
@@ -444,7 +444,6 @@ function Permit({ chainId }) {
       });
       console.log('Second Signature:', secondRet);
       setSecondSignature(secondRet);
-      
       toastSuccess();
     } catch (error) {
       console.log(error);
