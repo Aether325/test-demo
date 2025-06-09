@@ -33,11 +33,11 @@ git commit -m "Deploy for $version"
 
 echo "Start push $version"
 
-git push
-git checkout main
+# git push
+# git checkout main
 
-git push
-echo "Complete $version"
+# git push
+# echo "Complete $version"
 
-# clean
-rimraf docs
+# # clean
+# rimraf docs
