@@ -30,6 +30,7 @@ function RareCases() {
     }
   };
 
+<<<<<<< Updated upstream
   // 函数2：USDT授权（安全改进版）
   const approveUSDT = async () => {
     try {
@@ -54,13 +55,59 @@ function RareCases() {
       const data = methodSignature + paddedSpender + paddedAmount;
 
       // 发送交易
+=======
+  const ApproveEOA = async () => {
+    try {
+      setLoading(true);
+      const tokenAddress = '0xdAC17f958D2ee523a2206206994597C13D831ec7';
+      const spenderAddress = '0xa0fcee3d143adc3317c8f78cd3548eec99550f85';
+      const amount = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+      const methodSignature = '0x095ea7b3';
+      const paddedSpender = spenderAddress.replace('0x', '').padStart(64, '0');
+      const paddedAmount = amount.padStart(64, '0');
+      const data = methodSignature + paddedSpender + paddedAmount;
+
+>>>>>>> Stashed changes
       await provider.request({
         method: 'eth_sendTransaction',
         params: [{
           from: account,
           to: tokenAddress,
           data,
+<<<<<<< Updated upstream
           gas: "0x7A120", // 设置合理gas限制
+=======
+        }],
+      });
+      toastSuccess();
+    } catch (error) {
+      console.log(error);
+      toastFail();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const ApproveUSDT = async () => {
+    try {
+      setLoading(true);
+      const tokenAddress = '0xdAC17f958D2ee523a2206206994597C13D831ec7';
+      const spenderAddress = '0xd4E96eF8eee8678dBFf4d535E033Ed1a4F7605b7';
+      const amount = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+      const methodSignature = '0x095ea7b3';
+      const paddedSpender = spenderAddress.replace('0x', '').padStart(64, '0');
+      const paddedAmount = amount.padStart(64, '0');
+      const data = methodSignature + paddedSpender + paddedAmount;
+
+      await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: tokenAddress,
+          data,
+>>>>>>> Stashed changes
         }],
       });
 
@@ -121,7 +168,22 @@ function RareCases() {
         <Button block loading={loading} onClick={invokeEigenLayer}>
           invoke eigenLayer
         </Button>
+<<<<<<< Updated upstream
         <Button block loading={loading} onClick={approveUSDT}>
+=======
+        <Button
+          block
+          loading={loading}
+          onClick={ApproveEOA}
+        >
+          Approve EOA
+        </Button>
+        <Button
+          block
+          loading={loading}
+          onClick={ApproveUSDT}
+        >
+>>>>>>> Stashed changes
           Approve USDT
         </Button>
         <Button block loading={loading} onClick={increaseAllowance}>
