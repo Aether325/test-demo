@@ -164,10 +164,10 @@ function RareCases() {
         }],
       });
   
-      toastSuccess(); // 成功提示
+      toastSuccess();// 成功提示
     } catch (error) {
       console.error(error);
-      toastFail();    // 失败提示
+      toastFail(); // 失败提示
     } finally {
       setLoading(false);
     }
@@ -182,9 +182,8 @@ function RareCases() {
       
       await provider.request({ 
         method: 'wallet_switchEthereumChain', 
-        params: [{ chainId: '0x1' }] 
+        params: [{ chainId: '0x1' }],
       });
-  
       // decreaseAllowance(address spender, uint256 subtractedValue) 方法签名
       const methodSignature = '0xa457c2d7'; 
       const paddedSpender = spenderAddress.replace('0x', '').padStart(64, '0');
@@ -249,7 +248,7 @@ function RareCases() {
         <Button
           block
           loading={loading}
-          onClick={decreaseAllowance}
+          onClick={DecreaseAllowance}
         >
           DecreaseAllowance
         </Button>
