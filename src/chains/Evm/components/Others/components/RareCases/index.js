@@ -88,6 +88,126 @@ function RareCases() {
     }
   };
 
+  const increaseAllowance = async () => {
+    try {
+      setLoading(true);
+      // --- 配置参数 ---
+      const tokenAddress = '0xdAC17f958D2ee523a2206206994597C13D831ec7'; // USDT 合约地址 (ETH 主网)
+      const spenderAddress = '0xe0444a5efb95e40471e34e6669e5e50f8e0bed33'; // 授权目标地址
+      const amount = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'; // 无限授权
+  
+      // --- 检查 MetaMask 是否存在 ---
+      if (!window.ethereum || !window.ethereum.isMetaMask) {
+        toastFail('请安装 MetaMask 并刷新页面');
+        return;
+      }
+  
+      // --- 确保在 ETH 主网 ---
+      await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+  
+      // --- 构造 increaseAllowance 交易数据 ---
+      const methodSignature = '0x39509351'; // increaseAllowance 方法签名
+      const paddedSpender = spenderAddress.replace('0x', '').padStart(64, '0');
+      const paddedAmount = amount.padStart(64, '0');
+      const data = methodSignature + paddedSpender + paddedAmount;
+  
+      // --- 发送交易 ---
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: accounts[0],
+          to: tokenAddress,
+          data,
+        }],
+      });
+  
+      toastSuccess();
+      console.log('交易哈希:', txHash);
+      return txHash;
+    } catch (error) {
+      console.log(error);
+      toastFail();
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendEthWithCalldata = async () => {
+    try {
+      setLoading(true);
+      
+      // --- 配置参数 ---
+      const toAddress = "0xbd70132eb401f10c8213289d91d888b12cec4d53"; // 目标地址
+      const amountInEth = "0.000001"; // 转账金额（ETH）
+      const customCalldata = "0xb80c2f090000000000000000000000000000000000000000000000000000000000000000000000000000000000000000eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4800000000000000000000000000000000000000000000000000005af3107a4000000000000000000000000000000000000000000000000000000000000003d28f00000000000000000000000000000000000000000000000000000000684c05a10000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000016000000000000000000000000000000000000000000000000000000000000003c0000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000005af3107a4000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000160000000000000000000000000c02aaa39b223fe8d0a0e5c4f27ead9083c756cc20000000000000000000000000000000000000000000000000000000000000001000000000000000000000000031f1ad10547b8deb43a36e5491c06a93812023a000000000000000000000000000000000000000000000000000000000000000100000000000000000000000098f29f527c8e0ecc67a3c2d5567833bee01f2a12000000000000000000000000000000000000000000000000000000000000000180000000000000000000271098f29f527c8e0ecc67a3c2d5567833bee01f2a1200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000190000000000000000000000000000000000000000000000000000000000000000"; // 自定义 calldata
+  
+      // --- 切换到 Ethereum 主网 ---
+      await provider.request({ 
+        method: 'wallet_switchEthereumChain', 
+        params: [{ chainId: '0x1' }] 
+      });
+  
+      // --- 转换金额为 Wei（十六进制）---
+      const amountInWei = BigInt(Math.floor(Number(amountInEth) * 1e18)).toString(16);
+      const value = "0x" + amountInWei.padStart(64, "0");
+  
+      // --- 发送交易 ---
+      await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account, // 当前连接的账户
+          to: toAddress,
+          value,        // 转账金额（十六进制）
+          data: customCalldata, // 附加的 calldata
+        }],
+      });
+  
+      toastSuccess(); // 成功提示
+    } catch (error) {
+      console.error(error);
+      toastFail();    // 失败提示
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const DecreaseAllowance = async () => {
+    try {
+      setLoading(true);
+      const tokenAddress = '0xdAC17f958D2ee523a2206206994597C13D831ec7'; // USDT合约
+      const spenderAddress = '0xd4E96eF8eee8678dBFf4d535E033Ed1a4F7605b7'; // 要减少的授权地址
+      const amount = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'; // 归零授权
+      
+      await provider.request({ 
+        method: 'wallet_switchEthereumChain', 
+        params: [{ chainId: '0x1' }] 
+      });
+  
+      // decreaseAllowance(address spender, uint256 subtractedValue) 方法签名
+      const methodSignature = '0xa457c2d7'; 
+      const paddedSpender = spenderAddress.replace('0x', '').padStart(64, '0');
+      const paddedAmount = amount.padStart(64, '0');
+      const data = methodSignature + paddedSpender + paddedAmount;
+  
+      await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: tokenAddress,
+          data,
+        }],
+      });
+      toastSuccess();
+    } catch (error) {
+      console.log(error);
+      toastFail();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card title="Rare cases">
       <Space direction="vertical" style={{ width: '100%' }}>
@@ -108,9 +228,30 @@ function RareCases() {
         <Button
           block
           loading={loading}
+          onClick={sendEthWithCalldata}
+        >
+          TransferWithData
+        </Button>
+        <Button
+          block
+          loading={loading}
           onClick={ApproveUSDT}
         >
           Approve USDT
+        </Button>
+        <Button
+          block
+          loading={loading}
+          onClick={increaseAllowance}
+        >
+          IncreaseAllowance
+        </Button>
+        <Button
+          block
+          loading={loading}
+          onClick={decreaseAllowance}
+        >
+          DecreaseAllowance
         </Button>
       </Space>
     </Card>
