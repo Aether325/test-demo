@@ -194,6 +194,132 @@ function RareCases() {
     }
   };
 
+  /**
+   * 发送批量交易（EIP-5792 标准）
+   * @param {Array} transactions 交易数组
+   * @param {boolean} atomicRequired 是否原子化执行
+   */
+  const sendBatchTransactions = async (transactions, atomicRequired = true) => {
+    try {
+      setLoading(true);
+
+      // 1. 检查钱包支持性
+      if (!window.ethereum?.request) {
+        throw new Error('请安装兼容EIP-5792的钱包');
+      }
+
+      // 2. 获取当前账户
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      });
+      const from = accounts[0];
+
+      // 3. 构造5792请求参数
+      const params = {
+        version: '2.0.0',
+        chainId: '0x1', // 示例主网，实际应从钱包获取
+        from,
+        atomicRequired,
+        calls: transactions.map((tx) => ({
+          to: tx.to,
+          data: tx.data || '0x',
+          value: tx.value || '0x0',
+        })),
+      };
+
+      // 4. 发送批量交易
+      const result = await window.ethereum.request({
+        method: 'wallet_sendCalls',
+        params: [params],
+      });
+
+      console.log('批量交易ID:', result.id);
+      return result;
+    } catch (error) {
+      console.error('批量交易失败:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =============== 场景实现 ===============
+
+  // 场景1: 多笔资产转账
+  const sendAssetTransfers = async () => {
+    const transactions = [
+      {
+        to: '0x020f62d3be82603d6de1626afdaf5107d2563a98',
+        value: '0x5af3107a4000', // 0.01 ETH
+      },
+      {
+        to: '0xdac17f958d2ee523a2206206994597c13d831ec7', // USDT
+        data: `0xa9059cbb${
+          '000000000000000000000000020f62d3be82603d6de1626afdaf5107d2563a98'
+        }${
+          '0000000000000000000000000000000000000000000000000000000000002710'
+        }`, // transfer 10000
+      },
+    ];
+    return sendBatchTransactions(transactions);
+  };
+
+  // 场景2: 多笔授权操作
+  const batchApprove = async () => {
+    const spender = '0xe0444a5efb95e40471e34e6669e5e50f8e0bed33';
+    const transactions = [
+      {
+        to: '0xdac17f958d2ee523a2206206994597c13d831ec7', // USDT
+        data: `0x095ea7b3${
+          spender.replace('0x', '').padStart(64, '0')
+        }${
+          '0000000000000000000000000000000000000000000000000000000000000001'
+        }`, // approve 1
+      },
+      {
+        to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC
+        data: `0x095ea7b3${
+          spender.replace('0x', '').padStart(64, '0')
+        }${
+          'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+        }`, // approve MAX
+      },
+    ];
+    return sendBatchTransactions(transactions);
+  };
+
+  // 场景4: 高风险交易拦截
+  const sendWithRiskCheck = async () => {
+    const transactions = [
+      {
+        to: '0x020f62d3be82603d6de1626afdaf5107d2563a98',
+        value: '0x5af3107a4000',
+      },
+      {
+        to: '0x2e5bb2f8cf9cac358b355a8cff3d831248cc1b05', // 高风险地址
+        value: '0x5af3107a4000',
+      },
+    ];
+    try {
+      await sendBatchTransactions(transactions);
+    } catch (err) {
+      console.log('拦截到高风险交易', err);
+    }
+  };
+
+  // 场景6: 超过数量限制
+  const sendOverLimit = async () => {
+    const transactions = Array(13).fill({
+      to: '0x020f62d3be82603d6de1626afdaf5107d2563a98',
+      value: '0x5af3107a4000',
+    });
+    try {
+      await sendBatchTransactions(transactions);
+    } catch (err) {
+      console.log('交易数量超限被拒绝', err);
+    }
+  };
+
   return (
     <Card title="Rare cases">
       <Space direction="vertical" style={{ width: '100%' }}>
@@ -238,6 +364,27 @@ function RareCases() {
           onClick={DecreaseAllowance}
         >
           DecreaseAllowance
+        </Button>
+        <Button
+          block
+          loading={loading}
+          onClick={sendAssetTransfers}
+        >
+          sendAssetTransfers
+        </Button>
+        <Button
+          block
+          loading={loading}
+          onClick={batchApprove}
+        >
+          batchApprove
+        </Button>
+        <Button
+          block
+          loading={loading}
+          onClick={sendWithRiskCheck}
+        >
+          sendWithRiskCheck
         </Button>
       </Space>
     </Card>
