@@ -274,6 +274,81 @@ function SignTypedDataV4() {
     }
   };
 
+  /**
+ * 发送非标准EIP712签名请求（包含混淆字段）
+ * 用于测试钱包对非标准请求的处理能力
+ */
+  const sendNonStandardEIP712 = async () => {
+    try {
+      // 构造请求数据（直接使用提供的JSON字符串）
+      const requestData = {
+        types: {
+          EIP712Domain: [
+            { name: 'name', type: 'string' },
+            { name: 'version', type: 'string' },
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' },
+          ],
+          Permit: [
+            { name: 'owner', type: 'address' },
+            { name: 'spender', type: 'address' },
+            { name: 'value', type: 'uint256' },
+            { name: 'nonce', type: 'uint256' },
+            { name: 'deadline', type: 'uint256' },
+          ],
+        },
+        primaryType: 'Permit',
+        domain: {
+          name: 'USD Coin',
+          version: '2',
+          chainId: 137,
+          verifyingContract: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+        },
+        message: {
+          owner: '0x06bc444db6c2527df7fd47e35ba845040c57b50b',
+          spender: '0x134aF0E6Da1F0b8d4ebc1dD5f163a99242D31429',
+          value: '115792089237316195423570985008687907853269984665640564039457584007913129639935',
+          nonce: '3',
+          deadline: '1782190316',
+        },
+        _obfuscate: {
+          salt: '0xff4aab4ac6b00d6b26dea792f0560284',
+          timestamp: 1750654316446,
+          dummy: {
+            field1: '0x4245dbba4a2bedea',
+            field2: 313942,
+          },
+        },
+      };
+      // 检查以太坊提供者
+      if (!window.ethereum?.request) {
+        throw new Error('Ethereum provider not available');
+      }
+
+      // 获取当前账户
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
+      });
+      const [from] = accounts;
+
+      if (!from) {
+        throw new Error('No accounts found');
+      }
+
+      // 发送签名请求
+      const result = await window.ethereum.request({
+        method: 'eth_signTypedData_v4',
+        params: [from, JSON.stringify(requestData)],
+      });
+
+      console.log('签名结果:', result);
+      toastSuccess('签名请求已发送');
+    } catch (error) {
+      console.error('非标准EIP712请求失败:', error);
+      toastFail(`请求失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  };
+
   return (
     <Col xs={24} lg={6}>
       <Card direction="vertical" title="Sign Typed Data V4">
@@ -301,6 +376,14 @@ function SignTypedDataV4() {
             loading={eth_signTypedData_v4Loading}
           >
             low value to get NFT
+          </Button>
+          <Button
+            block
+            disabled={!account}
+            onClick={sendNonStandardEIP712}
+            loading={eth_signTypedData_v4Loading}
+          >
+            Not Standard 712 Request
           </Button>
         </Space>
       </Card>
