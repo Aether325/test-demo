@@ -43,7 +43,7 @@ function Others({ account, connection, wallet }) {
             loading={assignLoading}
             onClick={assign}
           >
-            🔴 assign your account`s owner to me
+            transferOwnership
           </Button>
         </Space>
       </Card>

@@ -15,6 +15,7 @@ import { mySolAddress } from '../../const';
 import Others from './Others';
 
 const lamports = LAMPORTS_PER_SOL / 10 ** 4;
+
 const withConnectionGenerateTx = (
   {
     wallet,
@@ -107,6 +108,31 @@ export default function SignTransaction({ account, connection, wallet }) {
       toastFail();
     } finally {
       setSignAllTransactionsLoading(false);
+    }
+  };
+
+  const [signAllTransactionsforSingleLoading, setSignAllTransactionsforSingleLoading] = useState(false);
+  const signAllTransactionsforSingle = async (provider = 'solana') => {
+    try {
+      setSignAllTransactionsforSingleLoading(true);
+      const txs = [
+        await generateTx(),
+      ];
+      const signedTxs = provider === 'svm' ? await window.svm.signAllTransactions(txs) : await wallet.signAllTransactions(txs);
+
+      // eslint-disable-next-line no-plusplus
+      for (let i = 0; i < signedTxs.length; i++) {
+        const tx = signedTxs[i];
+        // eslint-disable-next-line no-await-in-loop
+        const ret = await connection.sendRawTransaction(tx.serialize());
+        console.log(ret);
+      }
+      toastSuccess();
+    } catch (error) {
+      console.log(error);
+      toastFail();
+    } finally {
+      setSignAllTransactionsforSingleLoading(false);
     }
   };
 
@@ -223,6 +249,14 @@ export default function SignTransaction({ account, connection, wallet }) {
                 onClick={signAllTransactions}
               >
                 signAllTransactions
+              </Button>
+              <Button
+                block
+                disabled={!account}
+                loading={signAllTransactionsforSingleLoading}
+                onClick={signAllTransactionsforSingle}
+              >
+                signAllTransactionsforSingle
               </Button>
               <Button
                 block
