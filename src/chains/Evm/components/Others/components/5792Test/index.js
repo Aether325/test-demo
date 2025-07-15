@@ -1,4 +1,6 @@
-import { Button, Card, Space } from 'antd-mobile';
+import {
+  Button, Card, Space, Input,
+} from 'antd-mobile';
 import React, { useContext, useState } from 'react';
 
 import { toastFail, toastSuccess } from '../../../../../../utils/toast';
@@ -7,7 +9,9 @@ import EvmContext from '../../../../context';
 function TestFort5792() {
   const { account, provider } = useContext(EvmContext);
   const [loading, setLoading] = useState(false);
-
+  const [txId, setTxId] = useState('');
+  const [result, setResult] = useState(null);
+  const [chainIds, setChainIds] = useState('');
   /**
    * 发送批量交易（EIP-5792 标准）
    * @param {Array} transactions 交易数组
@@ -42,13 +46,13 @@ function TestFort5792() {
       };
 
       // 4. 发送批量交易
-      const result = await window.ethereum.request({
+      const response_params = await window.ethereum.request({
         method: 'wallet_sendCalls',
         params: [params],
       });
 
-      console.log('批量交易ID:', result.id);
-      return result;
+      console.log('批量交易ID:', response_params.id);
+      return response_params;
     } catch (error) {
       console.error('批量交易失败:', error);
       throw error;
@@ -57,39 +61,54 @@ function TestFort5792() {
     }
   };
 
-  const getTransactionStatus = async (transactionId) => {
+  // 简化版查询函数（移除参数检查）
+  const getTransactionStatus = async (id) => {
+    setLoading(true);
     try {
-      // 参数校验（ESLint: no-throw-literal）
-      if (!transactionId.startsWith('0x')) {
-        throw new Error('Transaction ID must start with 0x');
-      }
-      // 方法存在性检查（ESLint: @typescript-eslint/no-unnecessary-condition）
-      if (!window.ethereum?.request) {
-        throw new Error('Ethereum provider not available');
-      }
-      // 发送请求（ESLint: @typescript-eslint/await-thenable）
-      const result = await window.ethereum.request({
+      const response = await window.ethereum.request({
         method: 'wallet_getCallsStatus',
-        params: [transactionId],
+        params: [id],
       });
-      // 日志输出（ESLint: no-console）
-      if (process.env.NODE_ENV === 'development') {
-        console.debug('Transaction status:', {
-          id: result.id,
-          status: result.status,
-        });
-      }
-      return result;
-    } catch (error) {
-      // 错误处理（ESLint: @typescript-eslint/no-implicit-any-catch）
-      let errorMessage = 'Failed to get transaction status';
-      if (error instanceof Error) {
-        errorMessage += `: ${error.message}`;
-      }
-      throw new Error(errorMessage);
+      console.log('Transaction response:', response); // 直接打印原始响应
+      return response;
     } finally {
-      // 状态清理（ESLint: no-unsafe-finally）
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const data = await getTransactionStatus(txId);
+      setResult(data);
+    } catch (error) {
+      console.error('查询失败:', error);
+    }
+  };
+
+  const getCapabilities = async (chainIdsArray) => {
+    setLoading(true);
+    try {
+      const response = await window.ethereum.request({
+        method: 'wallet_getCapabilities',
+        params: [chainIdsArray],
+      });
+      console.log('Transaction response:', response); // 直接打印原始响应
+      return response;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitCap = async () => {
+    try {
+      // 正确写法：先分割再对每个元素trim
+      const idsArray = chainIds.split(',')
+        .map((id) => id.trim());
+      console.log('idsArray:', idsArray);
+      const data = await getCapabilities(idsArray);
+      setResult(data);
+    } catch (error) {
+      console.error('查询失败:', error);
     }
   };
 
@@ -200,7 +219,8 @@ function TestFort5792() {
       },
     ];
     try {
-      await sendBatchTransactions(transactions);
+      const response_params = await sendBatchTransactions(transactions);
+      console.log('批量交易ID:', response_params.id);
     } catch (err) {
       console.log('拦截到高风险交易', err);
     }
@@ -575,6 +595,51 @@ function TestFort5792() {
           </Button>
         </Space>
       </Space>
+      <Card title="查询" style={{ borderRadius: '8px' }}>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Input
+            value={txId}
+            onChange={setTxId}
+            placeholder="输入交易ID"
+            clearable
+            style={{ flex: 1 }}
+          />
+          <Button color="primary" onClick={handleSubmit} loading={loading}>查询Bundle</Button>
+          {result && (
+            <pre style={{
+              background: '#f5f5f5',
+              padding: '12px',
+              borderRadius: '4px',
+              maxHeight: '300px',
+              overflow: 'auto',
+            }}
+            >
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          )}
+        </Space>
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Input
+            value={chainIds}
+            onChange={setChainIds}
+            placeholder="输入链ID"
+            clearable
+          />
+          <Button color="primary" onClick={handleSubmitCap} loading={loading}>查询支持情况</Button>
+          {result && (
+            <pre style={{
+              background: '#f5f5f5',
+              padding: '12px',
+              borderRadius: '4px',
+              maxHeight: '300px',
+              overflow: 'auto',
+            }}
+            >
+              {JSON.stringify(result, null, 2)}
+            </pre>
+          )}
+        </Space>
+      </Card>
     </Card>
   );
 }
