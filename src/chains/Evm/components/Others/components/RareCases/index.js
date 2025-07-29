@@ -194,6 +194,40 @@ function RareCases() {
     }
   };
 
+  const walletConnectIncreaseAllowance = async () => {
+    try {
+      setLoading(true);
+      const tokenAddress = '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce';
+      const spenderAddress = '0000e59aabab4d0e1e1b9631adebe90937070000';
+      const amount = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x1' }],
+      });
+
+      const methodSignature = '0x39509351';
+      const paddedSpender = spenderAddress.replace('0x', '').padStart(64, '0');
+      const paddedAmount = amount.padStart(64, 'f');
+      const data = methodSignature + paddedSpender + paddedAmount;
+
+      await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: tokenAddress,
+          data,
+        }],
+      });
+      toastSuccess();
+    } catch (error) {
+      console.log(error);
+      toastFail();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   /**
    * 发送批量交易（EIP-5792 标准）
    * @param {Array} transactions 交易数组
@@ -286,9 +320,9 @@ function RareCases() {
         <Button
           block
           loading={loading}
-          onClick={DecreaseAllowance}
+          onClick={walletConnectIncreaseAllowance}
         >
-          DecreaseAllowance
+          walletConnectIncreaseAllowance
         </Button>
       </Space>
     </Card>
