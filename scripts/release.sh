@@ -12,9 +12,12 @@ node scripts/build.js
 
 echo "End compile $version"
 
-cp ../public/tonconnect-manifest.json ../docs
+# 把编译产物放到 docs/ 供 GitHub Pages 使用
+rm -rf docs
+cp -r build docs
+cp public/tonconnect-manifest.json docs/
 
-# 缓存编译结果
+# 缓存编译结果（含 docs/）
 git stash -u
 
 # 切换到目标分支
