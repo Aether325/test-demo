@@ -1,5 +1,5 @@
 import { Button, Space } from 'antd-mobile';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SignMessage from './components/SignMessage';
 import useNetwork from './hooks/useNetwork';
 import Network from './components/Network';
@@ -15,6 +15,7 @@ import Eip6963 from './components/Eip6963';
 import Eip7702 from './components/Eip7702';
 import GetEncryptPublicKey from './components/GetEncryptPublicKey';
 import { getEvmBlackEoaAddress, getSimilarAddress, getStrongBlackEoaAddress } from './const';
+import { patchProvider } from '../../utils/calldataStore';
 
 function Evm() {
   const [provider, setProvider] = useState({});
@@ -22,6 +23,12 @@ function Evm() {
     account, handleConnect, handleConnectAllChains, handleDisConnect,
   } = useConnect(provider);
   const { chainId } = useNetwork(provider);
+
+  useEffect(() => {
+    patchProvider(provider, 'EVM');
+    if (window.ethereum) patchProvider(window.ethereum, 'EVM');
+    if (window.okxwallet) patchProvider(window.okxwallet, 'EVM');
+  }, [provider]);
 
   const context = useMemo(() => ({
     account,

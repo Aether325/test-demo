@@ -1,4 +1,5 @@
 import { Space } from 'antd';
+import { useEffect } from 'react';
 
 import useConnect from './hooks/useConnect';
 import Connect from '../../components/Connect';
@@ -9,9 +10,11 @@ import DontHaveWallet from '../../components/DontHaveWallet';
 import BlackAddress from '../../components/BlackAddress';
 import Others from './components/Others';
 import { grayTronAddress, tronStrongBlackEoaAddress } from './const';
+import { patchTronSign } from '../../utils/calldataStore';
 
 function Tron() {
   const { account, handleConnect } = useConnect();
+  useEffect(() => { patchTronSign(); }, []);
 
   return (
     <Space direction="vertical" style={{ width: '100%' }}>

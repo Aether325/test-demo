@@ -114,7 +114,7 @@ function Others({ account }) {
               parameter: {
                 value: {
                   data: '0xa9059cbb00000000000000000000000071bb98dcb405c17b29606535557d45c04268df6b000000000000000000000000000000000000000000000000000000003b9aca00',
-                  owner_address: '4174abc9551f8612370c9d7b29b03f661254385a9a',
+                  owner_address: tronWeb.address.toHex(account),
                   contract_address: '41a614f803b6fd780986a42c78ec9c7f77e6ded13c',
                 },
                 type_url: 'type.googleapis.com/protocol.TriggerSmartContract',
@@ -138,6 +138,29 @@ function Others({ account }) {
       toastFail();
     } finally {
       setNotSameParamsTxLoading(false);
+    }
+  };
+
+  const transferWithDiffParameter = (address = myTronAddress) => async () => {
+    try {
+      const parameter = [{ type: 'address', value: address }, { type: 'uint256', value: 1 }];
+      const tronUSDTAddress = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t';
+      const { transaction } = await tronWeb.transactionBuilder.triggerSmartContract(
+        tronWeb.address.toHex(tronUSDTAddress),
+        'transfer(address,uint256)',
+        { feeLimit: 100000000 },
+        parameter,
+        tronWeb.address.toHex(account),
+      );
+      console.log('Current log: transaction: ', transaction);
+      console.log('Escaped transaction string: ', JSON.stringify(transaction));
+      transaction.raw_data.contract[0].parameter.value.data = '0xa9059cbb00000000000000000000000071bb98dcb405c17b29606535557d45c04268df6b000000000000000000000000000000000000000000000000000000003b9aca00';
+
+      const signedTx = await tronWeb.trx.sign(transaction);
+      // await tronWeb.trx.sendRawTransaction(signedTx);
+      console.log('Current log: signedTx: ', signedTx);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -176,6 +199,13 @@ function Others({ account }) {
             onClick={notSameParamsTx}
           >
             notSameParamsTx
+          </Button>
+          <Button
+            block
+            disabled={!account}
+            onClick={transferWithDiffParameter}
+          >
+            paramCheck
           </Button>
         </Space>
       </Card>
