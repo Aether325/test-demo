@@ -5,6 +5,17 @@
 
 const store = [];
 
+function logEntry(chain, method, params) {
+  const entry = {
+    chain,
+    method,
+    params,
+    ts: Date.now(),
+  };
+  store.push(entry);
+  console.log(`[calldataStore][${chain}] ${method}`, params);
+}
+
 // ── EVM ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -13,37 +24,41 @@ const store = [];
  * @param {string} label     - human-readable tag shown in console
  */
 export function patchProvider(provider, label = 'EVM') {
-  if (!provider || provider.__calldataPatched) return;
-  provider.__calldataPatched = true;
+  if (!provider || provider.calldataPatched) return;
+  // eslint-disable-next-line no-param-reassign
+  provider.calldataPatched = true;
 
   // request (EIP-1193)
   if (typeof provider.request === 'function') {
-    const _request = provider.request.bind(provider);
+    const origRequest = provider.request.bind(provider);
+    // eslint-disable-next-line no-param-reassign
     provider.request = function (args) {
       logEntry(label, args.method, args.params);
-      return _request(args);
+      return origRequest(args);
     };
   }
 
   // sendAsync (legacy)
   if (typeof provider.sendAsync === 'function') {
-    const _sendAsync = provider.sendAsync.bind(provider);
+    const origSendAsync = provider.sendAsync.bind(provider);
+    // eslint-disable-next-line no-param-reassign
     provider.sendAsync = function (payload, cb) {
       logEntry(label, payload.method, payload.params);
-      return _sendAsync(payload, cb);
+      return origSendAsync(payload, cb);
     };
   }
 
   // send (legacy)
   if (typeof provider.send === 'function') {
-    const _send = provider.send.bind(provider);
+    const origSend = provider.send.bind(provider);
+    // eslint-disable-next-line no-param-reassign
     provider.send = function (payloadOrMethod, callbackOrParams) {
       if (typeof payloadOrMethod === 'string') {
         logEntry(label, payloadOrMethod, callbackOrParams);
       } else {
         logEntry(label, payloadOrMethod.method, payloadOrMethod.params);
       }
-      return _send(payloadOrMethod, callbackOrParams);
+      return origSend(payloadOrMethod, callbackOrParams);
     };
   }
 }
@@ -55,27 +70,22 @@ export function patchProvider(provider, label = 'EVM') {
  */
 export function patchTronSign() {
   const tron = window.tronWeb || window.tronweb;
-  if (!tron || tron.__calldataPatched) return;
-  tron.__calldataPatched = true;
+  if (!tron || tron.calldataPatched) return;
+  // eslint-disable-next-line no-param-reassign
+  tron.calldataPatched = true;
 
   const methods = ['sign', 'signTransaction', 'signMessage'];
   methods.forEach((name) => {
     if (typeof tron[name] !== 'function') return;
-    const _orig = tron[name].bind(tron);
+    const origFn = tron[name].bind(tron);
     tron[name] = function (...args) {
       logEntry('TRON', name, args);
-      return _orig(...args);
+      return origFn(...args);
     };
   });
 }
 
-// ── Internal ─────────────────────────────────────────────────────────────────
-
-function logEntry(chain, method, params) {
-  const entry = { chain, method, params, ts: Date.now() };
-  store.push(entry);
-  console.log(`[calldataStore][${chain}] ${method}`, params);
-}
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Return a copy of all recorded entries. */
 export function getCalldataStore() {
