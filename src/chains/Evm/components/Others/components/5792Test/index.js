@@ -35,6 +35,8 @@ function TestFort5792() {
   const BASE_chain = '0x2105';
   const ARB_Chain = '0xa4b1';
   const ETH_chain = '0x1';
+  const teslax = '0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0';
+  const nvdax = '0xc845b2894dbddd03858fd2d643b4ef725fe0849d';
 
   /**
    * 发送批量交易（EIP-5792 标准）
@@ -632,6 +634,21 @@ function TestFort5792() {
     }
   };
 
+  const approve2RWA = async () => {
+    const spender1 = '0x40aa958dd87fc8305b97f2ba922cddca374bcd7f'; // 对应撤销的合约1
+    const spender2 = '0x40aa958dd87fc8305b97f2ba922cddca374bcd7f'; // 对应撤销的合约2
+    const transactions = [
+      { to: teslax, data: buildApproveData(spender1) },
+      { to: nvdax, data: buildApproveData(spender2) },
+    ];
+    try {
+      await sendBatchTransactions(transactions);
+      console.log('授权2个RWA合约授权成功:', result);
+    } catch (err) {
+      console.log('撤销2个RWA合约授权失败:', err);
+    }
+  };
+
   /**
    * 授权USDC给2个合约
    */
@@ -849,7 +866,14 @@ function TestFort5792() {
           >
             swapinPancake
           </Button>
-
+          <Button
+            style={{ width: '100' }}
+            block
+            loading={loading}
+            onClick={approve2RWA}
+          >
+            approve2RWA
+          </Button>
           <Button
             block
             loading={loading}
