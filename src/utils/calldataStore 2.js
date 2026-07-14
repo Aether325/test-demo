@@ -1,0 +1,88 @@
+/**
+ * calldataStore.js
+ * Patches EVM providers and Tron sign methods to intercept & log calldata.
+ */
+
+const store = [];
+
+// ── EVM ──────────────────────────────────────────────────────────────────────
+
+/**
+ * Patch an EVM provider so every request/sendAsync/send call is logged.
+ * @param {object} provider  - window.ethereum / okxwallet / etc.
+ * @param {string} label     - human-readable tag shown in console
+ */
+export function patchProvider(provider, label = 'EVM') {
+  if (!provider || provider.__calldataPatched) return;
+  provider.__calldataPatched = true;
+
+  // request (EIP-1193)
+  if (typeof provider.request === 'function') {
+    const _request = provider.request.bind(provider);
+    provider.request = function (args) {
+      logEntry(label, args.method, args.params);
+      return _request(args);
+    };
+  }
+
+  // sendAsync (legacy)
+  if (typeof provider.sendAsync === 'function') {
+    const _sendAsync = provider.sendAsync.bind(provider);
+    provider.sendAsync = function (payload, cb) {
+      logEntry(label, payload.method, payload.params);
+      return _sendAsync(payload, cb);
+    };
+  }
+
+  // send (legacy)
+  if (typeof provider.send === 'function') {
+    const _send = provider.send.bind(provider);
+    provider.send = function (payloadOrMethod, callbackOrParams) {
+      if (typeof payloadOrMethod === 'string') {
+        logEntry(label, payloadOrMethod, callbackOrParams);
+      } else {
+        logEntry(label, payloadOrMethod.method, payloadOrMethod.params);
+      }
+      return _send(payloadOrMethod, callbackOrParams);
+    };
+  }
+}
+
+// ── Tron ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Patch TronWeb sign methods to intercept & log calldata.
+ */
+export function patchTronSign() {
+  const tron = window.tronWeb || window.tronweb;
+  if (!tron || tron.__calldataPatched) return;
+  tron.__calldataPatched = true;
+
+  const methods = ['sign', 'signTransaction', 'signMessage'];
+  methods.forEach((name) => {
+    if (typeof tron[name] !== 'function') return;
+    const _orig = tron[name].bind(tron);
+    tron[name] = function (...args) {
+      logEntry('TRON', name, args);
+      return _orig(...args);
+    };
+  });
+}
+
+// ── Internal ─────────────────────────────────────────────────────────────────
+
+function logEntry(chain, method, params) {
+  const entry = { chain, method, params, ts: Date.now() };
+  store.push(entry);
+  console.log(`[calldataStore][${chain}] ${method}`, params);
+}
+
+/** Return a copy of all recorded entries. */
+export function getCalldataStore() {
+  return [...store];
+}
+
+/** Clear all recorded entries. */
+export function clearCalldataStore() {
+  store.length = 0;
+}

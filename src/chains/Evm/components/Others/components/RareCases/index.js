@@ -7,6 +7,7 @@ import EvmContext from '../../../../context';
 const USDC_ETH = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
 const USDT_ETH = '0xdac17f958d2ee523a2206206994597c13d831ec7';
 const USDC_Base = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
+const rwa_addr = '0x92fd66527192e3e61d4ddd13322aa222de86f9b5';
 const Black_EOA = '0x58818bfcd98135bf9eb6e5f341a8bec128533d56';
 const USDT_Base = '0xfde4c96c8593536e31f229ea8f37b2ada2699bb2';
 const WTH_Base = '0x4200000000000000000000000000000000000006';
@@ -48,6 +49,42 @@ function RareCases() {
       await provider.request({
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: '0x1' }],
+      });
+      const methodSignature = '0x095ea7b3';
+      const paddedSpender = spenderAddress.slice(2).padStart(64, '0');
+      const paddedAmount = amount.padStart(64, 'f');
+      const dataBytes = methodSignature + paddedSpender + paddedAmount;
+      // 3. 发送交易
+      const txHash = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: account,
+          to: tokenAddress,
+          data: dataBytes,
+          gas: '0x7a120',
+          gasPrice: '0x77359400',
+        }],
+      });
+      console.log('Transaction Hash:', txHash);
+      toastSuccess();
+    } catch (error) {
+      console.error('Approval Error:', error);
+      toastFail(error.message || 'Approval failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const ApproveRWA = async () => {
+    try {
+      setLoading(true);
+      const tokenAddress = rwa_addr; // USDT合约地址
+      const spenderAddress = white_EOA;
+      const amount = 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'; // 最大授权量
+      // 1. 确保连接的是以太坊主网
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x1237' }],
       });
       const methodSignature = '0x095ea7b3';
       const paddedSpender = spenderAddress.slice(2).padStart(64, '0');
@@ -806,6 +843,13 @@ function RareCases() {
           onClick={ApproveSelf}
         >
           ApproveSelf
+        </Button>
+        <Button
+          block
+          loading={loading}
+          onClick={ApproveRWA}
+        >
+          ApproveRWA
         </Button>
         <Button
           block
