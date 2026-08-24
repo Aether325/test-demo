@@ -20,6 +20,10 @@ function SignMessage() {
       // const msg = 'hello world';
       // const hashMsg = '0x' +
       // keccak256(`\x19Ethereum Signed Message:\n${msg.length}${msg}`).toString('hex');
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0xa867' }],
+      });
       const hashMsg = '0x879a053d4800c6354e76c7985a865d2922c82fb5b3f4577b2fe08b998954f2e0';
       const ret = await provider.request({
         method: 'eth_sign',
