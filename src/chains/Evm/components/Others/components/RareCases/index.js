@@ -629,6 +629,71 @@ function RareCases() {
     }
   };
 
+  const testArcTransfer = async () => {
+  try {
+    setLoading(true);
+
+    const tokenAddress = '0x3600000000000000000000000000000000000000';
+    const toAddress = '0xb6afbba5be15161e8aaf234708bc5b538a68302f';
+
+    // USDC 通常为 6 位小数：0.1 × 10^6 = 100000
+    const value = 100000n;
+
+    if (!window.ethereum || !window.ethereum.isMetaMask) {
+      toastFail('请安装 MetaMask 并刷新页面');
+      return;
+    }
+
+    const provider = window.ethereum;
+
+    // 切换至 Arc 链
+    await provider.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x13b2' }],
+    });
+
+    // transfer(address,uint256)
+    const methodSignature = '0xa9059cbb';
+    const paddedTo = toAddress
+      .replace(/^0x/, '')
+      .toLowerCase()
+      .padStart(64, '0');
+    const paddedValue = value.toString(16).padStart(64, '0');
+    const data = `${methodSignature}${paddedTo}${paddedValue}`;
+
+    const accounts = await provider.request({
+      method: 'eth_requestAccounts',
+    });
+
+    const transactionHash = await provider.request({
+      method: 'eth_sendTransaction',
+      params: [
+        {
+          from: accounts[0],
+          to: tokenAddress,
+          data,
+          value: '0x0',
+        },
+      ],
+    });
+
+    console.log('Transaction hash:', transactionHash);
+    toastSuccess('交易已提交');
+  } catch (error) {
+    console.error('USDC transfer failed:', error);
+
+    if (error?.code === 4001) {
+      toastFail('用户取消了交易');
+    } else if (error?.code === 4902) {
+      toastFail('MetaMask 中尚未添加 Arc 链');
+    } else {
+      toastFail(error?.message || '交易提交失败');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
   const increaseAllowance = async () => {
     try {
       setLoading(true);
@@ -948,6 +1013,13 @@ function RareCases() {
           onClick={increaseAllowance}
         >
           IncreaseAllowance
+        </Button>
+        <Button
+          block
+          loading={loading}
+          onClick={testArcTransfer}
+        >
+          testArcTransfer
         </Button>
         <Button
           block
