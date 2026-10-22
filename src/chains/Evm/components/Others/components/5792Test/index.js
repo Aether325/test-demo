@@ -800,6 +800,68 @@ function TestFort5792() {
     }
   };
 
+  const testOptimizationBNB = async () => {
+    await provider.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x38' }], // Arbitrum One
+    });
+    const spender = '0xb7a9e437ff040387a56cb6c4ce951a64138944ee';
+    const transactions = [
+      {
+        to: '0x6807dc923806fe8fd134338eabca509979a7e0cb',
+        data: '0x28530a470000000000000000000000000000000000000000000000000000000000000001',
+      },
+      {
+        to: '0xb7a9e437ff040387a56cb6c4ce951a64138944ee',
+        value: '0x5af3107a4000',
+      },
+      {
+        to: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d', // USDC
+        data: `0x095ea7b3${
+          spender.replace('0x', '').padStart(64, '0')
+        }${
+          'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+        }`, // approve MAX
+      },
+    ];
+    try {
+      await sendBatchTransactions('0x38', transactions);
+    } catch (err) {
+      console.log('拦截到高风险交易', err);
+    }
+  };
+
+  const testOptimization = async () => {
+    const spender = '0xb7a9e437ff040387a56cb6c4ce951a64138944ee';
+    const transactions = [
+      {
+        to: '0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2',
+        data: '0x28530a470000000000000000000000000000000000000000000000000000000000000001',
+      },
+      {
+        to: '0xD4287c60e288868016649539E651d03E5823dc1F',
+        data: '0x13bdfacd ',
+      },
+      {
+        to: '0xb7a9e437ff040387a56cb6c4ce951a64138944ee',
+        value: '0x5af3107a4000',
+      },
+      {
+        to: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', // USDC
+        data: `0x095ea7b3${
+          spender.replace('0x', '').padStart(64, '0')
+        }${
+          'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
+        }`, // approve MAX
+      },
+    ];
+    try {
+      await sendBatchTransactions(transactions);
+    } catch (err) {
+      console.log('拦截到高风险交易', err);
+    }
+  };
+
   /**
    * 撤销USDC对5个合约的授权
    */
@@ -1061,6 +1123,20 @@ function TestFort5792() {
             onClick={revoke5Contracts}
           >
             revoke5Contracts
+          </Button>
+          <Button
+            block
+            loading={loading}
+            onClick={testOptimization}
+          >
+            testIconOpTrans
+          </Button>
+          <Button
+            block
+            loading={loading}
+            onClick={testOptimization}
+          >
+            testIconOpTransBNB
           </Button>
         </Space>
       </Space>
