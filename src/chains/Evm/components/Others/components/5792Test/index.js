@@ -840,7 +840,7 @@ function TestFort5792() {
       },
       {
         to: '0xD4287c60e288868016649539E651d03E5823dc1F',
-        data: '0x13bdfacd ',
+        data: '0x13bdfacd',
       },
       {
         to: '0xb7a9e437ff040387a56cb6c4ce951a64138944ee',
